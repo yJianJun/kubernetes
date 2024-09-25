@@ -36,47 +36,44 @@ import (
 	_ "k8s.io/kubernetes/pkg/apis/core/install"
 )
 
-// LogREST implements the log endpoint for a Pod
+// LogREST 实现 Pod 的日志端点
 type LogREST struct {
 	KubeletConn client.ConnectionInfoGetter
 	Store       *genericregistry.Store
 }
 
-// LogREST implements GetterWithOptions
+// LogREST 实现 GetterWithOptions
 var _ = rest.GetterWithOptions(&LogREST{})
 
-// New creates a new Pod log options object
+// New 创建一个新的 Pod 日志选项对象
 func (r *LogREST) New() runtime.Object {
 	// TODO - return a resource that represents a log
 	return &api.Pod{}
 }
 
-// Destroy cleans up resources on shutdown.
+// Destroy 在关闭时清理资源。
 func (r *LogREST) Destroy() {
 	// Given that underlying store is shared with REST,
 	// we don't destroy it here explicitly.
 }
 
-// ProducesMIMETypes returns a list of the MIME types the specified HTTP verb (GET, POST, DELETE,
-// PATCH) can respond with.
+// ProducesMIMETypes 返回指定 HTTP 动词（GET、POST、DELETE、 PATCH) 可以响应。
 func (r *LogREST) ProducesMIMETypes(verb string) []string {
-	// Since the default list does not include "plain/text", we need to
-	// explicitly override ProducesMIMETypes, so that it gets added to
-	// the "produces" section for pods/{name}/log
+	// 由于默认列表不包含“plain/text”，我们需要显式覆盖 ProducesMIMETypes，以便将其添加到pods/{name}/log 的“生产”部分
 	return []string{
 		"text/plain",
 	}
 }
 
-// ProducesObject returns an object the specified HTTP verb respond with. It will overwrite storage object if
-// it is not nil. Only the type of the return object matters, the value will be ignored.
+// ProducesObject 返回指定 HTTP 动词响应的对象。如果出现以下情况，它将覆盖存储对象：
+// 它不为零。只有返回对象的类型很重要，该值将被忽略。
 func (r *LogREST) ProducesObject(verb string) interface{} {
 	return ""
 }
 
-// Get retrieves a runtime.Object that will stream the contents of the pod log
+// Get 检索将流式传输 pod 日志内容的runtime.Object
 func (r *LogREST) Get(ctx context.Context, name string, opts runtime.Object) (runtime.Object, error) {
-	// register the metrics if the context is used.  This assumes sync.Once is fast.  If it's not, it could be an init block.
+	// 如果使用了上下文，则注册指标。  这假设sync.Once 很快。  如果不是，它可能是一个初始化块。
 	registerMetrics()
 
 	logOpts, ok := opts.(*api.PodLogOptions)
@@ -121,12 +118,12 @@ func countSkipTLSMetric(insecureSkipTLSVerifyBackend bool) {
 	deprecatedPodLogsUsage.WithLabelValues(usageType).Inc()
 }
 
-// NewGetOptions creates a new options object
+// NewGetOptions 创建一个新的选项对象
 func (r *LogREST) NewGetOptions() (runtime.Object, bool, string) {
 	return &api.PodLogOptions{}, false, ""
 }
 
-// OverrideMetricsVerb override the GET verb to CONNECT for pod log resource
+// OverrideMetricsVerb 将 GET 谓词覆盖为 CONNECT 以获取 pod 日志资源
 func (r *LogREST) OverrideMetricsVerb(oldVerb string) (newVerb string) {
 	newVerb = oldVerb
 
